@@ -1,0 +1,219 @@
+{
+  "public_id": "adalovelace",
+  "profile_url": "https://www.linkedin.com/in/adalovelace",
+  "member_id": "12345",
+  "fetched_at": "2026-08-27T09:33:05+00:00",
+  "basics": {
+    "first_name": "Ada",
+    "last_name": "Lovelace",
+    "full_name": "Ada Lovelace",
+    "headline": "Analytical Engine Programmer | Mathematician",
+    "about": "I write algorithms for machines that do not exist yet.",
+    "industry": "Computer Software",
+    "location": {
+      "text": "London",
+      "country": null,
+      "country_code": "GB",
+      "postal_code": "EC1A"
+    },
+    "pronoun": "She her",
+    "is_premium": true,
+    "is_influencer": false,
+    "is_creator": null,
+    "birth_date": null,
+    "profile_picture": {
+      "url": "https://media.licdn.com/dms/image/ROOT/shrink_400_400/photo.jpg",
+      "sizes": [
+        {
+          "width": 100,
+          "height": 100,
+          "url": "https://media.licdn.com/dms/image/ROOT/shrink_100_100/photo.jpg"
+        },
+        {
+          "width": 400,
+          "height": 400,
+          "url": "https://media.licdn.com/dms/image/ROOT/shrink_400_400/photo.jpg"
+        }
+      ]
+    },
+    "background_image": null
+  },
+  "network": {
+    "followers": null,
+    "connections": null,
+    "degree": "1st"
+  },
+  "contact": {
+    "emails": [
+      "ada@example.org"
+    ],
+    "phone_numbers": [],
+    "websites": [
+      {
+        "url": "https://example.org",
+        "label": "Personal"
+      }
+    ],
+    "twitter": [
+      "adalovelace"
+    ],
+    "address": null,
+    "birthday": null
+  },
+  "experience": [
+    {
+      "title": "Chief Algorithm Designer",
+      "company": "Analytical Engine Co",
+      "employment_type": "Full-time",
+      "location": "London, United Kingdom",
+      "description": "Wrote the first published computer program.",
+      "start_date": {
+        "year": 1843,
+        "month": 3,
+        "day": null,
+        "text": "Mar 1843"
+      },
+      "end_date": null,
+      "is_current": true,
+      "duration_months": 2202,
+      "date_range": "Mar 1843 - Present",
+      "company_id": "99",
+      "company_linkedin_url": "https://www.linkedin.com/company/analytical-engine/",
+      "company_logo": {
+        "url": "https://media.licdn.com/dms/image/CO/logo_200_200/l.png",
+        "sizes": [
+          {
+            "width": 200,
+            "height": 200,
+            "url": "https://media.licdn.com/dms/image/CO/logo_200_200/l.png"
+          }
+        ]
+      },
+      "company_industries": [
+        "Computer Hardware"
+      ]
+    },
+    {
+      "title": "Translator",
+      "company": "Analytical Engine Co",
+      "employment_type": null,
+      "location": "London",
+      "description": null,
+      "start_date": {
+        "year": 1842,
+        "month": 1,
+        "day": null,
+        "text": "Jan 1842"
+      },
+      "end_date": {
+        "year": 1843,
+        "month": 12,
+        "day": null,
+        "text": "Dec 1843"
+      },
+      "is_current": false,
+      "duration_months": 24,
+      "date_range": "Jan 1842 - Dec 1843",
+      "company_id": "99",
+      "company_linkedin_url": "https://www.linkedin.com/company/analytical-engine/",
+      "company_logo": {
+        "url": "https://media.licdn.com/dms/image/CO/logo_200_200/l.png",
+        "sizes": [
+          {
+            "width": 200,
+            "height": 200,
+            "url": "https://media.licdn.com/dms/image/CO/logo_200_200/l.png"
+          }
+        ]
+      },
+      "company_industries": [
+        "Computer Hardware"
+      ]
+    }
+  ],
+  "education": [
+    {
+      "school": "Private Tutoring",
+      "degree": "Mathematics",
+      "field_of_study": "Mathematics and Logic",
+      "grade": "Distinction",
+      "activities": null,
+      "description": null,
+      "school_id": "1234",
+      "school_url": "https://www.linkedin.com/school/private-tutoring/",
+      "school_logo": null,
+      "start_date": {
+        "year": 1829,
+        "month": null,
+        "day": null,
+        "text": "1829"
+      },
+      "end_date": {
+        "year": 1835,
+        "month": null,
+        "day": null,
+        "text": "1835"
+      },
+      "is_current": false,
+      "duration_months": 84,
+      "date_range": "1829 - 1835"
+    }
+  ],
+  "skills": [
+    "Mathematics",
+    "Algorithms"
+  ],
+  "certifications": [
+    {
+      "name": "Certificate in Analytical Engines",
+      "authority": "Royal Society",
+      "license_number": "RS-1843",
+      "url": "https://example.org/cert",
+      "issued_on": {
+        "year": 1843,
+        "month": 6,
+        "day": null,
+        "text": "Jun 1843"
+      },
+      "expires_on": null,
+      "company_logo": null
+    }
+  ],
+  "languages": [
+    {
+      "name": "English",
+      "proficiency": "Native or bilingual proficiency"
+    }
+  ],
+  "projects": [
+    {
+      "name": "Note G",
+      "description": "An algorithm for computing Bernoulli numbers.",
+      "url": "https://example.org/note-g",
+      "start_date": {
+        "year": 1843,
+        "month": null,
+        "day": null,
+        "text": "1843"
+      },
+      "end_date": null,
+      "is_current": true,
+      "duration_months": 2204,
+      "date_range": "1843 - Present"
+    }
+  ],
+  "publications": [],
+  "honors": [],
+  "volunteering": [],
+  "courses": [],
+  "organizations": [],
+  "patents": [],
+  "test_scores": [],
+  "counts": {
+    "experience": 2,
+    "education": 1,
+    "skills": 2
+  },
+  "source": "voyager",
+  "cached": false
+}

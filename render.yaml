@@ -1,0 +1,28 @@
+# Render blueprint - free tier, HTTPS out of the box.
+# Deploy: push this repo to GitHub, then New > Blueprint on render.com.
+# The secrets below are marked sync:false, so Render asks for them in the
+# dashboard instead of reading them from the repo.
+services:
+  - type: web
+    name: linkedin-profile-api
+    runtime: python
+    plan: free
+    region: oregon
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.7"
+      - key: LINKEDIN_COOKIE
+        sync: false
+      - key: LINKEDIN_EMAIL
+        sync: false
+      - key: LINKEDIN_PASSWORD
+        sync: false
+      - key: API_KEY
+        sync: false
+      - key: CACHE_TTL_SECONDS
+        value: "3600"
+      - key: RATE_LIMIT_PER_MINUTE
+        value: "20"
