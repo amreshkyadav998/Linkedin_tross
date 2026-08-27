@@ -1,3 +1,14 @@
+---
+title: LinkedIn Profile API
+emoji: 🔗
+colorFrom: blue
+colorTo: purple
+sdk: docker
+app_port: 8000
+pinned: false
+short_description: Turn a LinkedIn profile URL into structured JSON
+---
+
 # LinkedIn Profile API
 
 Give it a LinkedIn profile URL, get back the profile as structured JSON.

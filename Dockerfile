@@ -1,4 +1,4 @@
-# Used by Fly.io / Railway / Koyeb / any container host.
+# Used by Hugging Face Spaces / Fly.io / Koyeb / any container host.
 FROM python:3.12-slim
 
 ENV PYTHONUNBUFFERED=1 \
