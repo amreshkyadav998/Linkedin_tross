@@ -187,6 +187,9 @@ async def health():
             else "none"
         ),
         "transport": "curl_cffi-chrome" if client.impersonating else "httpx",
+        "public_page_fallback": (
+            "enabled" if settings.enable_public_fallback else "disabled"
+        ),
         "cached_profiles": cache.size,
     }
 

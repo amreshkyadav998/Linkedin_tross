@@ -36,6 +36,57 @@ A full sample response is in [`examples/response.json`](examples/response.json).
 
 ---
 
+## How this works: no browser, direct API calls
+
+This is a **purely reverse-engineered** solution. It speaks HTTP to LinkedIn's
+private JSON endpoints directly.
+
+**Not used anywhere in this project:** Selenium, Playwright, Puppeteer,
+headless Chrome, any WebDriver, or any JavaScript execution. There is no
+browser in the dependency tree — `pip install -r requirements.txt` pulls a web
+framework, an HTTP client, and two parsers. Nothing renders a page.
+
+Every endpoint the code calls:
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /voyager/api/identity/dash/profiles?q=memberIdentity&…` | The profile. All of it. |
+| `GET /voyager/api/identity/profiles/{id}/profileContactInfo` | Contact card (opt-in; LinkedIn now returns 410) |
+| `POST /uas/authenticate` | Sign-in, when using credentials |
+
+Authentication is reverse-engineered too, not just the data fetch: the login
+flow posts to `/uas/authenticate` with the CSRF token echoed from the session
+cookie. No browser is involved in obtaining a session either.
+
+### On `curl_cffi`
+
+`curl_cffi` is an **HTTP client** — libcurl with the ability to replay a
+browser's TLS handshake. It does not render pages, execute JavaScript, or
+drive a browser. It exists here because LinkedIn fingerprints the TLS
+handshake (JA3/JA4), so a request whose cookies say Chrome but whose
+handshake says Python gets its session invalidated. Matching the fingerprint
+is a property of the *socket*, not a browser. It is an optional dependency;
+remove it and the code still runs on plain `httpx`.
+
+### On the public-page fallback
+
+If the authenticated API call fails, the service can return a thinner profile
+parsed from the logged-out page's embedded `schema.org` JSON-LD, tagged
+`"source": "public_page"` so the caller always knows. This is still an HTTP
+GET and a string parse — no browser — but it is a **degraded secondary path**,
+not how the API normally works.
+
+To verify the reverse-engineered path is doing all the work, switch it off:
+
+```bash
+ENABLE_PUBLIC_FALLBACK=false
+```
+
+Every successful response will then be `"source": "voyager"`, straight from
+the Voyager API, or an error. `/health` reports which mode you are in.
+
+---
+
 ## Contents
 
 1. [Approach](#approach)
@@ -263,6 +314,7 @@ curl localhost:8000/health
 | `LINKEDIN_LI_AT` / `LINKEDIN_JSESSIONID` | — | Legacy two-cookie fallback. Authenticates, but LinkedIn kills the session after a few requests — see the approach section. |
 | `LINKEDIN_EMAIL` / `LINKEDIN_PASSWORD` | — | Optional auto-login when `LINKEDIN_LI_AT` is empty. |
 | `API_KEY` | — | If set, callers must send `X-API-Key`. Empty = open API. |
+| `ENABLE_PUBLIC_FALLBACK` | `true` | Set `false` to disable the public-page fallback so only the reverse-engineered API path is used. |
 | `CACHE_TTL_SECONDS` | `3600` | Response cache lifetime. `0` disables. |
 | `RATE_LIMIT_PER_MINUTE` | `20` | Per-IP limit. `0` disables. |
 | `REQUEST_TIMEOUT` | `25` | Seconds to wait on LinkedIn. |
@@ -352,6 +404,7 @@ curl -X POST "$BASE/api/v1/profile" \
   "linkedin_session": "configured",
   "cookie_mode": "full",
   "transport": "curl_cffi-chrome",
+  "public_page_fallback": "enabled",
   "cached_profiles": 3
 }
 ```
@@ -481,7 +534,7 @@ app/
   static/        One-page demo UI
 scripts/
   get_cookie.py  CLI helper: sign in and print a LINKEDIN_COOKIE line
-tests/           70 tests: URL parsing, cookie/rotation handling, the
+tests/           73 tests: URL parsing, cookie/rotation handling, the
                  credential login, the dash graph walk, and the HTTP routes
 examples/
   response.json  A complete sample response
