@@ -116,7 +116,12 @@ class VoyagerClient:
     def __init__(self, settings: Settings):
         self.settings = settings
         self._client: httpx.AsyncClient | None = None
-        self._login_failed_at = 0.0
+        # None means "no login has failed yet", which is NOT the same as
+        # "a login failed at t=0". time.monotonic() counts from boot on Linux,
+        # so in a fresh container it returns a small number - and comparing it
+        # against a 0.0 sentinel made the first login look like it had just
+        # failed, skipping it entirely.
+        self._login_failed_at: float | None = None
 
         # Preferred: the whole cookie header, copied from a browser session.
         self._cookies = parse_cookie_header(settings.linkedin_cookie)
@@ -218,15 +223,16 @@ class VoyagerClient:
         if not self.settings.can_login:
             return False
 
-        since_failure = time.monotonic() - self._login_failed_at
-        if since_failure < LOGIN_RETRY_COOLDOWN:
-            log.info(
-                "Skipping re-login: last attempt failed %.0fs ago (cooling down "
-                "for %ds to avoid locking the account).",
-                since_failure,
-                LOGIN_RETRY_COOLDOWN,
-            )
-            return False
+        if self._login_failed_at is not None:
+            since_failure = time.monotonic() - self._login_failed_at
+            if since_failure < LOGIN_RETRY_COOLDOWN:
+                log.info(
+                    "Skipping login: the last attempt failed %.0fs ago (cooling "
+                    "down for %ds to avoid locking the account).",
+                    since_failure,
+                    LOGIN_RETRY_COOLDOWN,
+                )
+                return False
 
         # Imported here, not at module scope: app.auth imports this module.
         from .auth import LoginFailed, fetch_session_cookies
@@ -243,7 +249,12 @@ class VoyagerClient:
             return False
 
         self.set_cookies(jar)
-        self._login_failed_at = 0.0
+        # None means "no login has failed yet", which is NOT the same as
+        # "a login failed at t=0". time.monotonic() counts from boot on Linux,
+        # so in a fresh container it returns a small number - and comparing it
+        # against a 0.0 sentinel made the first login look like it had just
+        # failed, skipping it entirely.
+        self._login_failed_at: float | None = None
         log.info("Authenticated with LinkedIn.")
         return True
 

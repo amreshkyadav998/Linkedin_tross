@@ -143,3 +143,46 @@ async def test_redirect_is_reported_as_a_session_problem():
     assert "/login" in message
     # and it must have asked the transport not to follow the redirect
     assert client._client.kwargs.get("follow_redirects") is False or            client._client.kwargs.get("allow_redirects") is False
+
+
+async def test_first_login_is_attempted_on_a_freshly_booted_process(monkeypatch):
+    """Regression: the cooldown used 0.0 as "never failed", but monotonic()
+    counts from boot on Linux - so in a fresh container the first login looked
+    like one that had just failed, and was skipped. The server then served
+    no_session forever despite having valid credentials."""
+    from app import auth
+
+    client = _client(linkedin_email="ada@example.org", linkedin_password="hunter2")
+    assert client._login_failed_at is None
+
+    attempts = []
+
+    async def fake_login(username, password, timeout):
+        attempts.append(username)
+        return {"li_at": "AQEDAtoken", "JSESSIONID": '"ajax:1"',
+                "bcookie": '"v=2&a"'}
+
+    monkeypatch.setattr(auth, "fetch_session_cookies", fake_login)
+
+    assert await client.try_relogin() is True
+    assert attempts == ["ada@example.org"], "the first login must actually run"
+    assert client.authenticated
+
+
+async def test_cooldown_applies_only_after_a_real_failure(monkeypatch):
+    from app import auth
+
+    client = _client(linkedin_email="ada@example.org", linkedin_password="hunter2")
+    calls = []
+
+    async def failing_login(username, password, timeout):
+        calls.append(username)
+        raise auth.LoginFailed("checkpoint")
+
+    monkeypatch.setattr(auth, "fetch_session_cookies", failing_login)
+
+    assert await client.try_relogin() is False
+    assert len(calls) == 1
+    # Second attempt is suppressed - repeated failed logins lock accounts.
+    assert await client.try_relogin() is False
+    assert len(calls) == 1
