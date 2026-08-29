@@ -30,8 +30,9 @@ class ProfileNotFound(LinkedInError):
 class SessionExpired(LinkedInError):
     def __init__(self, detail: str = ""):
         super().__init__(
-            "The LinkedIn session is no longer valid. Refresh the LINKEDIN_LI_AT "
-            "cookie and redeploy." + (f" ({detail})" if detail else ""),
+            "The LinkedIn session is no longer valid. Refresh LINKEDIN_COOKIE "
+            "(or set LINKEDIN_EMAIL/LINKEDIN_PASSWORD so the server can sign in "
+            "itself) and redeploy." + (f" ({detail})" if detail else ""),
             status=502,
             code="linkedin_session_expired",
         )

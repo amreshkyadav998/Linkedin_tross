@@ -23,6 +23,12 @@ A full sample response is in [`examples/response.json`](examples/response.json).
 
 **Live demo UI:** `/` &nbsp;·&nbsp; **Interactive docs:** `/docs` &nbsp;·&nbsp; **Health:** `/health`
 
+![The demo UI returning a live profile as structured JSON](docs/demo.png)
+
+*The demo page at `/` — paste a profile URL, get the parsed response. Above,
+a live `200` from the deployed instance: `public_id`, `member_id`, name,
+headline and location resolved from LinkedIn's Voyager API.*
+
 ---
 
 ## How this works: no browser, direct API calls
