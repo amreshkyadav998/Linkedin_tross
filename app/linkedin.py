@@ -291,9 +291,17 @@ class VoyagerClient:
         # own jar must stay empty - otherwise it appends a second, stale
         # JSESSIONID and the csrf-token header no longer matches it.
         self._clear_transport_jar()
+        # Do NOT follow redirects on API calls. Voyager answers a valid
+        # request with JSON; a redirect means it is sending us to the login
+        # wall, i.e. the session is not accepted. Following that just bounces
+        # between login pages until the client gives up with an opaque
+        # "maximum redirects followed" error, hiding the real cause.
+        no_redirects = (
+            {"allow_redirects": False} if HAS_CURL_CFFI else {"follow_redirects": False}
+        )
         try:
             resp = await self._client.get(
-                url, params=params, headers=self._headers(accept)
+                url, params=params, headers=self._headers(accept), **no_redirects
             )
         except _TIMEOUTS as exc:
             raise LinkedInError(
@@ -304,6 +312,19 @@ class VoyagerClient:
 
         log.info("voyager GET %s -> %s", path, resp.status_code)
         self._adopt_rotations(resp)
+
+        if 300 <= resp.status_code < 400:
+            location = resp.headers.get("location", "")
+            raise SessionExpired(
+                "LinkedIn redirected the API call to the login page"
+                + (f" ({location.split('?')[0]})" if location else "")
+                + ". The session is not accepted from this machine. A common "
+                "cause is deploying with cookies minted elsewhere: LinkedIn "
+                "binds a session to the browser and network it was created on, "
+                "so a cookie copied from a laptop is often rejected when "
+                "replayed from a datacenter. Signing in from the server itself "
+                "(LINKEDIN_EMAIL/LINKEDIN_PASSWORD) avoids the mismatch"
+            )
 
         if resp.status_code == 200:
             try:

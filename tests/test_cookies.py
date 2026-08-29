@@ -105,3 +105,41 @@ def test_all_rotated_cookies_are_adopted():
     header = client._cookie_header()
     assert "__cf_bm=fresh-token" in header
     assert 'lidc="b=NEW"' in header
+
+
+class _StubTransport:
+    """Minimal stand-in for the HTTP client inside VoyagerClient."""
+
+    def __init__(self, response):
+        self._response = response
+        self.cookies = httpx.Cookies()
+        self.kwargs = None
+
+    async def get(self, url, **kwargs):
+        self.kwargs = kwargs
+        return self._response
+
+
+async def test_redirect_is_reported_as_a_session_problem():
+    """A 3xx from a JSON API is the login wall. Following it yields an opaque
+    "maximum redirects followed" error that hides the real cause, so the
+    client must not follow it and must say what actually happened."""
+    from app.errors import SessionExpired
+
+    client = _client(linkedin_cookie=FULL_COOKIE)
+    client._client = _StubTransport(
+        httpx.Response(
+            302,
+            headers={"location": "https://www.linkedin.com/login?session_redirect=x"},
+            request=httpx.Request("GET", "https://www.linkedin.com/voyager/api/me"),
+        )
+    )
+
+    with pytest.raises(SessionExpired) as err:
+        await client._get("/me")
+
+    message = str(err.value)
+    assert "redirected" in message
+    assert "/login" in message
+    # and it must have asked the transport not to follow the redirect
+    assert client._client.kwargs.get("follow_redirects") is False or            client._client.kwargs.get("allow_redirects") is False
