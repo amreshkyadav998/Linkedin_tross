@@ -69,6 +69,9 @@ async def _dash_with_relogin(client: VoyagerClient, public_id: str) -> dict:
 
 
 async def _try_public_page(client: VoyagerClient, public_id: str) -> dict | None:
+    if not client.settings.enable_public_fallback:
+        log.info("Public-page fallback is disabled; surfacing the API error.")
+        return None
     html = await client.public_html(public_id)
     if not html:
         return None

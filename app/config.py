@@ -25,6 +25,9 @@ class Settings(BaseSettings):
 
     # --- This API ---------------------------------------------------------
     api_key: str = ""
+    # The public-page fallback is a degraded secondary path. Turn it off to
+    # prove the reverse-engineered API path is doing all the work.
+    enable_public_fallback: bool = True
     cache_ttl_seconds: int = 3600
     rate_limit_per_minute: int = 20
     request_timeout: int = 25

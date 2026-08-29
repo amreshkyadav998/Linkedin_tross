@@ -102,3 +102,35 @@ def test_rate_limit(client, monkeypatch):
     blocked = client.get("/api/v1/profile", params=params)
     assert blocked.status_code == 429
     assert blocked.json()["code"] == "rate_limited"
+
+
+async def test_public_fallback_can_be_disabled(monkeypatch):
+    """The brief asks for a purely reverse-engineered solution, so it must be
+    possible to run with the secondary HTML path switched off entirely - and
+    when it is off, the page must not even be requested."""
+    from app.service import _try_public_page
+
+    async def must_not_be_called(_public_id):
+        raise AssertionError("public page was fetched despite being disabled")
+
+    monkeypatch.setattr(main.settings, "enable_public_fallback", False)
+    monkeypatch.setattr(main.client, "public_html", must_not_be_called)
+
+    assert await _try_public_page(main.client, "anyone") is None
+
+
+async def test_public_fallback_is_used_when_enabled(monkeypatch):
+    from app.service import _try_public_page
+
+    called = []
+
+    async def fake_html(public_id):
+        called.append(public_id)
+        return "<html><head></head><body>no json-ld here</body></html>"
+
+    monkeypatch.setattr(main.settings, "enable_public_fallback", True)
+    monkeypatch.setattr(main.client, "public_html", fake_html)
+
+    # No JSON-LD in that page, so it parses to None - but it was fetched.
+    assert await _try_public_page(main.client, "anyone") is None
+    assert called == ["anyone"]
