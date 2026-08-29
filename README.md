@@ -82,6 +82,50 @@ the Voyager API, or an error. `/health` reports which mode you are in.
 
 ---
 
+## Deployment note: sessions and datacenter IPs
+
+The reverse-engineered path works. It is verified end to end against live
+LinkedIn — the screenshot above is a `200` from the deployed instance, and
+locally it returns complete profiles: every position with company logos and
+URLs, education, certifications, skills, images.
+
+What is **not** reliable is keeping a session alive from a cloud host, and it
+is worth being precise about why.
+
+LinkedIn binds a session to the network it was created on. A cookie minted in
+a browser in India and replayed from a datacenter in Oregon is a session that
+appears to have jumped continents, so LinkedIn rejects it — the Voyager call
+gets redirected to the login wall within minutes to hours of deploying.
+
+The obvious fix is to have the server sign in itself, so the session is
+created from the same IP that uses it. That is implemented
+(`LINKEDIN_EMAIL`/`LINKEDIN_PASSWORD`, see [Option A](#option-a--sign-in-with-credentials-best-for-a-deployed-instance)),
+and it is the right architecture — but LinkedIn answers a scripted login from
+an unfamiliar datacenter IP with a checkpoint or an outright `401`, which is
+exactly what its anti-automation is for.
+
+**What actually closes this gap is residential proxies** — routing requests
+through consumer IPs so the session's origin looks consistent with where it
+was created. That is a paid, operational concern rather than a code change,
+and it is out of scope here.
+
+So the deployed instance behaves like this:
+
+| | |
+|---|---|
+| Right after deploying with a fresh cookie | Full data, `"source": "voyager"` |
+| After LinkedIn rejects the session | `"source": "public_page"` with a `warning`, or `502` with a specific error |
+
+The public-page fallback exists precisely so the API keeps answering rather
+than going dark, and every response says which path produced it. Set
+`ENABLE_PUBLIC_FALLBACK=false` to see the API path alone.
+
+**To see it at its best, run it locally** (see [Quick start](#quick-start-local))
+with a cookie from your own browser. Same code, same endpoints — the session
+simply survives, because it is used from the network that created it.
+
+---
+
 ## Contents
 
 1. [Approach](#approach)
@@ -568,41 +612,49 @@ examples/
    header. You get `502 linkedin_session_expired`; the fix is fresh cookies.
    `cookie_mode` on `/health` tells you whether you are set up correctly.
 
-5. **Detection is layered, and this is an arms race.** Getting a session to
+5. **A cloud deployment cannot hold a session for long.** LinkedIn binds a
+   session to the network that created it, so a cookie copied from a laptop is
+   rejected once replayed from a datacenter, and a scripted login from a
+   datacenter IP gets a checkpoint or a 401. Closing this needs residential
+   proxies, which is an operational cost rather than a code change. See
+   [Deployment note](#deployment-note-sessions-and-datacenter-ips). Locally,
+   sessions are stable.
+
+6. **Detection is layered, and this is an arms race.** Getting a session to
    survive needed three separate things: the full cookie header, following
    `Set-Cookie` rotations, and matching Chrome's TLS fingerprint. LinkedIn can
    add another layer whenever it likes. Treat a working deployment as
    something to re-verify, not something that stays fixed.
 
-6. **Rate limits are real and aggressive.** A few hundred profile views a day
+7. **Rate limits are real and aggressive.** A few hundred profile views a day
    from one account will trip throttling (`429`) or a `999` block. There is no
    published number, and it tightens for new accounts. Bulk work needs a pool
    of accounts and proxies, which is deliberately out of scope here.
 
-7. **Contact info is not available.** The `profileContactInfo` endpoint was
+8. **Contact info is not available.** The `profileContactInfo` endpoint was
    retired alongside `profileView` and now returns HTTP 410, so `contact` comes
    back with empty arrays. Everything rendered on the profile page itself is
    unaffected — it all comes from the dash call. The option is kept, off by
    default, in case LinkedIn restores the endpoint.
 
-8. **The fallback is much thinner.** Logged-out pages carry no skills, no
+9. **The fallback is much thinner.** Logged-out pages carry no skills, no
    certifications, no dates on most entries, and LinkedIn masks parts of the
    text with asterisks. Check `"source"` before relying on a field.
 
-9. **Sections are truncated as LinkedIn truncates them.** The dash call returns
+10. **Sections are truncated as LinkedIn truncates them.** The dash call returns
    the first page of each section, so a profile with 40+ positions may be cut
    off. Paginating every section would mean several more requests per profile —
-   a poor trade against limit #6.
+   a poor trade against limit #7.
 
-10. **Single-instance state.** The cache and rate limiter live in process
+11. **Single-instance state.** The cache and rate limiter live in process
    memory. Correct for one free instance; behind multiple replicas each has its
    own. Swapping both for Redis is a small change in `cache.py`.
 
-11. **No JavaScript rendering.** No headless browser is used — that is the point
+12. **No JavaScript rendering.** No headless browser is used — that is the point
    of calling the API directly. It also means anything rendered purely
    client-side and never returned by an endpoint is not available.
 
-12. **English only.** Requests pin `x-li-lang: en_US`, so enum labels and some
+13. **English only.** Requests pin `x-li-lang: en_US`, so enum labels and some
     LinkedIn-supplied strings come back in English regardless of the profile's
     locale.
 
